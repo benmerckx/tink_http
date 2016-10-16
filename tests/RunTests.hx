@@ -25,7 +25,8 @@ class RunTests {
         
       var server = Context.containers.get(container);
       try {
-        Sys.println(Ansi.text(Cyan, '\n>> Building container $container'));
+        Sys.println('');
+        Sys.println(Ansi.text(Cyan, '>> Building container $container'));
         var process = server(port);
         waitForConnection(port);
         
@@ -34,7 +35,8 @@ class RunTests {
             Ansi.fail('No such target: $target');
             continue;
           }
-          Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
+          Sys.println('');
+          Sys.println(Ansi.text(Yellow, '>> Running target $target'));
           var runner = Context.targets.get(target)(port);
           var code = runner.exitCode();
           if (code != 0)

@@ -18,15 +18,21 @@ typedef Target = {
 class Runner extends buddy.SingleSuite {
   
   var clients = [
-    for (key in Context.clients.keys())
+    for (key in Context.clients.keys()) if (key != '')
       {name: key, client: Context.clients.get(key)}
   ];
+  
+  var secureClients = [
+    for (key in Context.secureClients.keys()) if (key != '')
+      {name: key, client: Context.secureClients.get(key)}
+  ];
+  
+  function doRequest(client: Client, data: ClientRequest)
+    return client.request(data).flatMap(response);
    
   public function new() {
     function test(target: Target) {
-      
-      function request(data: ClientRequest)
-        return target.client.request(data).flatMap(response);
+      var request = doRequest.bind(target.client);
       
       describe('client ${target.name}', {
         
@@ -75,12 +81,28 @@ class Runner extends buddy.SingleSuite {
       });
     }
     
-    describe('tink_http',
-      for (target in clients) test(target)
-    );
+    function testSecure(target: Target) {
+      var request = doRequest.bind(target.client);
+      
+      describe('client ${target.name}', {
+        
+        it('client should fetch https url', function(done)
+          request({url: 'https://www.example.com'}).handle(function(res) {
+            res.body.should.contain('Example Domain');
+            done();
+          })
+        );
+      
+      });
+    }
+    
+    describe('tink_http', {
+      for (target in clients) test(target);
+      for (target in secureClients) testSecure(target);
+    });
   }
   
-  function response(res: IncomingResponse): Future<{data: Data, res: IncomingResponse}>
+  function response(res: IncomingResponse): Future<{data: Data, res: IncomingResponse, body: String}>
     return IncomingResponse.readAll(res).map(function (o) 
       return switch o {
         case Success(bytes):
@@ -88,11 +110,10 @@ class Runner extends buddy.SingleSuite {
           var data = null;
           try 
             data = Json.parse(body)
-          catch (e: Dynamic)
-            throw 'Could not parse response as json:\n"$body"';
-          {data: data, res: res}
+          catch (e: Dynamic) {}
+          {data: data, res: res, body: body}
         default:
-          {data: null, res: res}
+          {data: null, res: res, body: null}
       }
     );
     

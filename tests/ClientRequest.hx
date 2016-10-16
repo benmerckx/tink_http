@@ -1,3 +1,4 @@
+import tink.Url;
 import tink.http.Header.HeaderField;
 import tink.http.Method;
 import tink.http.Request;
@@ -30,12 +31,16 @@ abstract ClientRequest(RequestData) {
     }
   
   @:to public function toOutgoing(): OutgoingRequest {
+    var url = Url.parse(this.url);
+    var host = url.host == null 
+      ? new Host('127.0.0.1', Std.parseInt(Env.getDefine('port'))) 
+      : url.host;
     return 
       new OutgoingRequest(
         new OutgoingRequestHeader(
           this.method, 
-          new Host('127.0.0.1', Std.parseInt(Env.getDefine('port'))), 
-          this.url, fields()
+          host, 
+          url, fields()
         ), 
         this.body
       );

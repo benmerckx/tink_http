@@ -146,6 +146,24 @@ class Context {
   
   ];
   
+  public static var secureClients: Map<String, Client> = [
+  
+    '' => null,
+    
+    #if php
+    'php secure' => new SecurePhpClient(),
+    #end
+    
+    #if nodejs
+    'node secure' => new NodeSecureClient(),
+    #end
+    
+    #if (neko || nodejs)
+    'curl secure' => new SecureCurlClient()
+    #end
+  
+  ];
+  
   #if neko
   
   static function targetArgs(port: Int)
