@@ -108,15 +108,17 @@ class StdClient implements ClientObject {
 
 #if tink_tcp
 class SecureTcpClient extends TcpClient {
-  public function new() {
-    super();
+  public function new(close = true) {
+    super(close);
     secure = true;
   }
 }
 
 class TcpClient implements ClientObject { 
   var secure = false;
-  public function new() {}
+  var close: Bool;
+  public function new(close = true) 
+    this.close = close;
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
     
     var cnx = Connection.establish({
@@ -124,9 +126,9 @@ class TcpClient implements ClientObject {
       port: req.header.host.port,
       secure: secure
     });
-    
+
     req.body.prepend(req.header.toString()).pipeTo(cnx.sink).handle(function (x) {
-      cnx.sink.close();//TODO: implement connection reuse
+      if (close) cnx.sink.close();//TODO: implement connection reuse
     });
     
     return cnx.source.parse(ResponseHeader.parser()).map(function (o) return switch o {
